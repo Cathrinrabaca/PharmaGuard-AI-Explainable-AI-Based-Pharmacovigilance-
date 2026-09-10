@@ -91,10 +91,9 @@ GDRIVE_FILE_ID = "10RkEYIwq2YqIzIRDTlw3W3tSON-61ppQ"
 def load_data():
     if not os.path.exists(DATA_PATH):
         os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
-        with st.spinner("Downloading dataset from Google Drive ..."):
-            url = f"https://drive.google.com/uc?export=download&id={GDRIVE_FILE_ID}&confirm=t"
-            import urllib.request
-            urllib.request.urlretrieve(url, DATA_PATH)
+        with st.spinner("Downloading dataset from Google Drive (this may take a minute) ..."):
+            import gdown
+            gdown.download(id=GDRIVE_FILE_ID, output=DATA_PATH, quiet=False, fuzzy=True)
     return pd.read_csv(DATA_PATH)
 
 
