@@ -87,6 +87,13 @@ def load_model_and_meta():
 
 @st.cache_data(show_spinner="Loading dataset ...")
 def load_data():
+    if not os.path.exists(DATA_PATH):
+        st.error(
+            "⚠️ **Dataset not found** — `data/dataset.csv` is missing.\n\n"
+            "This app requires the FDA FAERS dataset to run. "
+            "Please add `data/dataset.csv` and restart."
+        )
+        st.stop()
     return pd.read_csv(DATA_PATH)
 
 
