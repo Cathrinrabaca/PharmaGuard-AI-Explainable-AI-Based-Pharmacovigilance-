@@ -85,44 +85,16 @@ def load_model_and_meta():
     return model, meta
 
 
-GDRIVE_FILE_ID = "10RkEYIwq2YqIzIRDTlw3W3tSON-61ppQ"
-
-def _download_gdrive(file_id: str, dest: str):
-    """Download a large file from Google Drive, handling the virus-scan warning page."""
-    import requests
-    session = requests.Session()
-    URL = "https://drive.google.com/uc?export=download"
-    response = session.get(URL, params={"id": file_id}, stream=True)
-    # Extract confirm token if present (large-file warning)
-    token = None
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            token = value
-            break
-    if token is None:
-        # newer Google Drive uses a query param in the response URL
-        for chunk in response.iter_content(chunk_size=8192):
-            text = chunk.decode("utf-8", errors="ignore")
-            if "confirm=" in text:
-                import re
-                m = re.search(r'confirm=([0-9A-Za-z_\-]+)', text)
-                if m:
-                    token = m.group(1)
-                break
-    if token:
-        response = session.get(URL, params={"id": file_id, "confirm": token}, stream=True)
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with open(dest, "wb") as f:
-        for chunk in response.iter_content(chunk_size=32768):
-            if chunk:
-                f.write(chunk)
+DATA_PART1 = os.path.join(BASE_DIR, "data", "dataset_part1.csv")
+DATA_PART2 = os.path.join(BASE_DIR, "data", "dataset_part2.csv")
 
 @st.cache_data(show_spinner="Loading dataset ...")
 def load_data():
-    if not os.path.exists(DATA_PATH):
-        with st.spinner("Downloading dataset from Google Drive (this may take a minute) ..."):
-            _download_gdrive(GDRIVE_FILE_ID, DATA_PATH)
-    return pd.read_csv(DATA_PATH)
+    if os.path.exists(DATA_PATH):
+        return pd.read_csv(DATA_PATH)
+    # Load from split files (used on Streamlit Cloud)
+    df = pd.concat([pd.read_csv(DATA_PART1), pd.read_csv(DATA_PART2)], ignore_index=True)
+    return df
 
 
 @st.cache_resource(show_spinner="Building SHAP explainer ...")
